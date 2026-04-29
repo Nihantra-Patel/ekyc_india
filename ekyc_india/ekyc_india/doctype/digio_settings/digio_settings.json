@@ -17,12 +17,14 @@
   "column_break_ktqp",
   "api_client_id",
   "api_secret",
+    "production_webhook_secret",
   "sandbox_settings_section",
   "sandbox_url",
   "enable_sandbox",
   "column_break_demw",
   "sandbox_api_client_id",
   "sandbox_api_secret",
+    "sandbox_webhook_secret",
   "enable_for_document_section",
   "documents"
  ],
@@ -60,6 +62,12 @@
    "fieldtype": "Password",
    "label": "API Secret"
   },
+    {
+     "depends_on": "enable_production",
+     "fieldname": "production_webhook_secret",
+     "fieldtype": "Password",
+     "label": "Webhook Secret"
+    },
   {
    "fieldname": "sandbox_settings_section",
    "fieldtype": "Section Break",
@@ -96,6 +104,12 @@
    "label": "Sandbox API Secret",
    "mandatory_depends_on": "enable_sandbox"
   },
+    {
+     "depends_on": "enable_sandbox",
+     "fieldname": "sandbox_webhook_secret",
+     "fieldtype": "Password",
+     "label": "Sandbox Webhook Secret"
+    },
   {
    "fieldname": "general_settings_section",
    "fieldtype": "Section Break",
