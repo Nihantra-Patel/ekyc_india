@@ -4,6 +4,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_urvo",
   "digio_id",
   "request_type",
   "status",
@@ -22,21 +23,26 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Digio ID",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "request_type",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Request Type",
-   "options": "\neSign\neKYC"
+   "options": "\neSign\neKYC",
+   "read_only": 1
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "\nPending\nKYC Requested\nKYC Completed\nKYC Review Ready\nKYC Approved\nKYC Rejected\nKYC Expired\nKYC Terminated\nSigned\nSign Rejected\nSign Failed\neSign Failed\neSign Pending"
+   "options": "\nPending\nKYC Requested\nKYC Completed\nKYC Review Ready\nKYC Approved\nKYC Rejected\nKYC Expired\nKYC Terminated\nSigned\nSign Rejected\nSign Failed\neSign Failed\neSign Pending",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_1",
@@ -47,14 +53,16 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Linked DocType",
-   "options": "DocType"
+   "options": "DocType",
+   "read_only": 1
   },
   {
    "fieldname": "linked_docname",
    "fieldtype": "Dynamic Link",
    "in_list_view": 1,
    "label": "Linked Document",
-   "options": "linked_doctype"
+   "options": "linked_doctype",
+   "read_only": 1
   },
   {
    "fieldname": "request_section",
@@ -65,7 +73,8 @@
    "fieldname": "response_json",
    "fieldtype": "Code",
    "label": "Response JSON",
-   "options": "JSON"
+   "options": "JSON",
+   "read_only": 1
   },
   {
    "fieldname": "webhook_section",
@@ -84,12 +93,17 @@
    "label": "Webhook Payload",
    "options": "JSON",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_urvo",
+   "fieldtype": "Section Break",
+   "label": "Details"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-08 15:20:38.970928",
+ "modified": "2026-05-08 17:03:41.125349",
  "modified_by": "Administrator",
  "module": "Ekyc India",
  "name": "Digio Request Log",
@@ -114,7 +128,7 @@
    "title": "KYC Requested"
   },
   {
-   "color": "Blue",
+   "color": "Green",
    "title": "KYC Completed"
   },
   {
@@ -122,7 +136,7 @@
    "title": "KYC Review Ready"
   },
   {
-   "color": "Green",
+   "color": "Blue",
    "title": "KYC Approved"
   },
   {
