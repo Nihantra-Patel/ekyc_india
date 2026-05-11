@@ -16,9 +16,7 @@ class DigioSettings(Document):
 	pass
 
 
-# ---------------------------------------------------------------------------
 # Outbound — eSign
-# ---------------------------------------------------------------------------
 
 
 def make_esignature_request(doc):
@@ -54,9 +52,7 @@ def make_esignature_request(doc):
 	save_request_log(response, linked_doctype=doc.doctype, linked_docname=doc.name, request_type="eSign")
 
 
-# ---------------------------------------------------------------------------
 # Outbound — eKYC
-# ---------------------------------------------------------------------------
 
 
 def make_ekyc_request(doc):
@@ -86,9 +82,7 @@ def make_ekyc_request(doc):
 		save_request_log(response, linked_doctype=doc.doctype, linked_docname=doc.name, request_type="eKYC")
 
 
-# ---------------------------------------------------------------------------
 # Webhook endpoint
-# ---------------------------------------------------------------------------
 
 
 @frappe.whitelist(allow_guest=True)
@@ -142,9 +136,7 @@ def verify_webhook_credentials():
 		frappe.throw(_("Digio webhook credential mismatch"), frappe.AuthenticationError)
 
 
-# ---------------------------------------------------------------------------
 # Webhook dispatcher
-# ---------------------------------------------------------------------------
 
 
 def dispatch_webhook_event(payload):
@@ -171,9 +163,7 @@ def dispatch_webhook_event(payload):
 		frappe.log_error(title="Digio Unhandled Event", message=json.dumps(payload, indent=2))
 
 
-# ---------------------------------------------------------------------------
 # Webhook handler — all events update Digio Request Log only
-# ---------------------------------------------------------------------------
 
 
 def log_webhook_status(payload, event, status):
@@ -187,9 +177,7 @@ def log_webhook_status(payload, event, status):
 	update_request_log(digio_id=digio_id, status=status, raw_payload=payload)
 
 
-# ---------------------------------------------------------------------------
 # Payload extractors
-# ---------------------------------------------------------------------------
 
 
 def get_kyc_request_data(payload):
@@ -202,9 +190,7 @@ def get_document_data(payload):
 	return data.get("document") or data.get("DOCUMENT") or {}
 
 
-# ---------------------------------------------------------------------------
 # Request log helpers
-# ---------------------------------------------------------------------------
 
 
 def save_request_log(response, linked_doctype=None, linked_docname=None, request_type=None):
@@ -235,9 +221,7 @@ def update_request_log(digio_id, status, raw_payload):
 	frappe.db.commit()
 
 
-# ---------------------------------------------------------------------------
 # Shared utilities
-# ---------------------------------------------------------------------------
 
 
 def get_general_settings():
