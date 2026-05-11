@@ -103,7 +103,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-08 17:03:41.125349",
+ "modified": "2026-05-11 18:06:04.871635",
  "modified_by": "Administrator",
  "module": "Ekyc India",
  "name": "Digio Request Log",
@@ -128,7 +128,7 @@
    "title": "KYC Requested"
   },
   {
-   "color": "Green",
+   "color": "Blue",
    "title": "KYC Completed"
   },
   {
@@ -136,7 +136,7 @@
    "title": "KYC Review Ready"
   },
   {
-   "color": "Blue",
+   "color": "Green",
    "title": "KYC Approved"
   },
   {
