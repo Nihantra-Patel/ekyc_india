@@ -17,6 +17,76 @@ class DigioSettings(Document):
 
 
 # ---------------------------------------------------------------------------
+# Web SDK API
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def get_digio_sdk_config():
+	base_url, environment = get_digio_environment_and_base_url()
+	sdk_base_url = get_sdk_base_url(environment)
+	return {
+		"base_url": base_url,
+		"sdk_base_url": sdk_base_url,
+		"sdk_url": f"{sdk_base_url}/sdk/v11/digio.js",
+		"environment": environment,
+	}
+
+
+@frappe.whitelist()
+def create_ekyc_request_for_sdk(identifier, customer_name=None, reference_id=None, template_name=None, doctype=None):
+	if not identifier:
+		frappe.throw(_("Identifier is mandatory"))
+
+	general_settings = get_general_settings()
+	api_client_id, api_client_secret, base_url = get_api_credentials_and_url()
+
+	body = frappe._dict(
+		customer_identifier=identifier,
+		notify_customer=True,
+		customer_name=customer_name or get_customer_name(identifier),
+		template_name=template_name or "DIGILOCKER_AADHAAR_PAN",
+		expire_in_days=general_settings.get("expire_in_days"),
+		generate_access_token=bool(general_settings.get("generate_access_token")),
+		reference_id=reference_id,
+		transaction_id=frappe.generate_hash(length=12),
+		generate_deeplink_info=False,
+	)
+
+	response = make_request(
+		method="POST",
+		url=f"{base_url}/client/kyc/v2/request/with_template",
+		headers=get_auth_headers(api_client_id, api_client_secret),
+		json=body,
+	)
+
+	save_request_log(
+		response,
+		linked_doctype=doctype,
+		linked_docname=reference_id,
+		request_type="eKYC",
+	)
+
+	request_id = response.get("id")
+	token_id = (
+		response.get("token_id")
+		or response.get("access_token")
+		or response.get("gwt")
+		or response.get("gateway_token")
+	)
+
+	_, environment = get_digio_environment_and_base_url()
+
+	return {
+		"request_id": request_id,
+		"identifier": identifier,
+		"token_id": token_id,
+		"environment": environment,
+		"raw": response,
+	}
+
+
+# ---------------------------------------------------------------------------
 # Outbound — eSign
 # ---------------------------------------------------------------------------
 
@@ -275,6 +345,30 @@ def get_api_credentials_and_url():
 	return api_client_id, api_client_secret, url
 
 
+def get_digio_environment_and_base_url():
+	digio_settings = frappe.get_doc("Digio Settings", "Digio Settings")
+
+	if digio_settings.enable_production:
+		base_url = frappe.get_single_value("Digio Settings", "production_url")
+		environment = "production"
+	else:
+		if not digio_settings.enable_sandbox:
+			frappe.throw(_("Please enable Sandbox or Production mode in Digio Settings"))
+		base_url = frappe.get_single_value("Digio Settings", "sandbox_url")
+		environment = "sandbox"
+
+	if not base_url:
+		frappe.throw(_("Please configure Digio base URL in Digio Settings"))
+
+	return base_url.rstrip("/"), environment
+
+
+def get_sdk_base_url(environment):
+	if environment == "production":
+		return "https://app.digio.in"
+	return "https://ext.digio.in"
+
+
 def get_file_data_in_base64(doctype, docname):
 	return base64.b64encode(
 		frappe.get_print(doctype, docname, as_pdf=True, pdf_generator="wkhtmltopdf")
@@ -303,6 +397,7 @@ def get_signers(doc):
 			email_ids = doc.get(data_field).replace(",", "\n")
 			signers += email_ids.split("\n")
 
+	print(f"Signers extracted for {doc.doctype} {doc.name}: {signers}")
 	return signers
 
 

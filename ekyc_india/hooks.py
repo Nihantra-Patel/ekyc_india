@@ -26,7 +26,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/ekyc_india/css/ekyc_india.css"
-# app_include_js = "/assets/ekyc_india/js/ekyc_india.js"
+app_include_js = "/assets/ekyc_india/js/digio_web_sdk.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/ekyc_india/css/ekyc_india.css"
