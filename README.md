@@ -61,21 +61,33 @@ Example — Loan Application sent via email to the applicant:
 
 ---
 
-### eKYC Flow
+### eKYC & eSign Flows
 
-1. A workflow action or button on the document triggers an eKYC request.
-2. Frappe sends the request to Digio using the Aadhaar / PAN / DigiLocker template.
-3. The customer receives an email or SMS with a link to complete verification.
-4. The customer completes Aadhaar / PAN / DigiLocker steps on the Digio-hosted page.
-5. Digio verifies the details and sends status updates back to Frappe via webhooks.
+**Setting up the Workflow**
+1. Create a Workflow for your DocType (e.g., Loan Application) from the Desk.
+2. When adding a Transition, choose the appropriate action from the dropdown:
+	- Send eKYC Request — for identity verification
+	- Make eSignature Request — for electronic signing
 
-### eSign Flow
+ Both actions are pre-created when the app is installed.
 
-1. A workflow action or button on the document triggers an eSign request.
-2. Frappe generates a PDF of the document and sends it to Digio along with the signer details.
-3. The customer receives an email with a signing link.
-4. The customer opens the link and completes Aadhaar-based electronic signing.
-5. Digio sends status updates back to Frappe via webhooks.
+<img width="5760" height="2736" alt="image" src="https://github.com/user-attachments/assets/44909d97-c445-4a79-87e6-c25b367f2b1b" />
+
+<br>
+
+**How each flow works**
+
+eKYC Flow:
+- A workflow action triggers an eKYC request
+- Frappe sends the request to Digio using the Aadhaar / PAN / DigiLocker template
+- Customer receives an email/SMS with a verification link
+- Customer completes verification on Digio-hosted page
+
+eSign Flow:
+- A workflow action triggers an eSign request
+- Frappe generates a PDF of the document and sends it to Digio with signer details
+- Customer receives an email with a signing link
+- Customer completes Aadhaar-based electronic signing
 
 ---
 
