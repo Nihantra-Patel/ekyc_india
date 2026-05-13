@@ -85,11 +85,12 @@ def make_ekyc_request(doc):
 # Webhook endpoint
 
 
+# nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
 @frappe.whitelist(allow_guest=True)
 def handle_webhook():
 	try:
-		payload = parse_webhook_payload()
 		verify_webhook_credentials()
+		payload = parse_webhook_payload()
 		dispatch_webhook_event(payload)
 		return {"status": "ok"}
 	except frappe.AuthenticationError:
@@ -299,13 +300,3 @@ def get_auth_headers(api_client_id, api_client_secret):
 		"Authorization": "Basic "
 		+ base64.b64encode(f"{api_client_id}:{api_client_secret}".encode()).decode(),
 	}
-
-
-@frappe.whitelist()
-def update_digio_settings(production_url, api_client_id, api_secret):
-	doc = frappe.get_single("Digio Settings")
-	doc.enable_production = 1
-	doc.production_url = production_url
-	doc.api_client_id = api_client_id
-	doc.api_secret = api_secret
-	doc.save()
