@@ -202,7 +202,6 @@ def save_request_log(response, linked_doctype=None, linked_docname=None, request
 	doc.request_type = request_type
 	doc.status = "Pending"
 	doc.save(ignore_permissions=True)
-	frappe.db.commit()
 
 
 def update_request_log(digio_id, status, raw_payload):
@@ -218,7 +217,6 @@ def update_request_log(digio_id, status, raw_payload):
 	log.webhook_received_at = now_datetime()
 	log.webhook_payload = json.dumps(raw_payload, indent=2)
 	log.save(ignore_permissions=True)
-	frappe.db.commit()
 
 
 # Shared utilities
