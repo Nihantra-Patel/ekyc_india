@@ -23,6 +23,8 @@
   "column_break_demw",
   "sandbox_api_client_id",
   "sandbox_api_secret",
+  "webhook_settings_section",
+  "webhook_secret",
   "enable_for_document_section",
   "documents"
  ],
@@ -116,6 +118,17 @@
    "fieldname": "send_sign_link",
    "fieldtype": "Check",
    "label": "Send Sign Link"
+  },
+  {
+   "fieldname": "webhook_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Webhook Settings"
+  },
+  {
+   "description": "Shared secret Digio sends as the <code>x-digio-webhook-secret</code> request header. Configure the same value in the Digio dashboard webhook settings. Do not reuse the API Secret.",
+   "fieldname": "webhook_secret",
+   "fieldtype": "Password",
+   "label": "Webhook Secret"
   },
   {
    "fieldname": "enable_for_document_section",
