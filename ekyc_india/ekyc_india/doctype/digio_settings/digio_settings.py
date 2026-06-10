@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import base64
+import hmac
 import json
 
 import frappe
@@ -85,7 +86,7 @@ def make_ekyc_request(doc):
 # Webhook endpoint
 
 
-# nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
+# nosemgrep: guest-whitelisted-method
 @frappe.whitelist(allow_guest=True)
 def handle_webhook():
 	try:
@@ -113,28 +114,16 @@ def parse_webhook_payload():
 
 
 def verify_webhook_credentials():
-	headers = frappe.request.headers
-	incoming_id = headers.get("x-digio-client-id", "")
-	incoming_secret = headers.get("x-digio-client-secret", "")
+	expected_secret = get_decrypted_password(
+		"Digio Settings", "Digio Settings", fieldname="webhook_secret", raise_exception=False
+	)
+	if not expected_secret:
+		# Fail-secure: refuse all webhooks until a secret is configured.
+		frappe.throw(_("Digio webhook secret is not configured"), frappe.AuthenticationError)
 
-	if not incoming_id or not incoming_secret:
-		return
-
-	digio_doc = frappe.get_doc("Digio Settings", "Digio Settings")
-
-	if digio_doc.enable_production:
-		expected_id = get_decrypted_password("Digio Settings", "Digio Settings", fieldname="api_client_id")
-		expected_secret = get_decrypted_password("Digio Settings", "Digio Settings", fieldname="api_secret")
-	else:
-		expected_id = get_decrypted_password(
-			"Digio Settings", "Digio Settings", fieldname="sandbox_api_client_id"
-		)
-		expected_secret = get_decrypted_password(
-			"Digio Settings", "Digio Settings", fieldname="sandbox_api_secret"
-		)
-
-	if incoming_id != expected_id or incoming_secret != expected_secret:
-		frappe.throw(_("Digio webhook credential mismatch"), frappe.AuthenticationError)
+	provided = frappe.request.headers.get("x-digio-webhook-secret", "")
+	if not provided or not hmac.compare_digest(provided, expected_secret):
+		frappe.throw(_("Digio webhook authentication failed"), frappe.AuthenticationError)
 
 
 # Webhook dispatcher
