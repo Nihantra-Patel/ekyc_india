@@ -1,5 +1,5 @@
 app_name = "ekyc_india"
-app_title = "Ekyc India"
+app_title = "eKYC India"
 app_publisher = "hello@frappe.io"
 app_description = "Indian compliance integrations"
 app_email = "hello@frappe.io"
@@ -13,7 +13,7 @@ add_to_apps_screen = [
 	{
 		"name": "ekyc_india",
 		"logo": "/assets/ekyc_india/images/ekyc_india.svg",
-		"title": "Ekyc India",
+		"title": "eKYC India",
 		"route": "/app/ekyc-india",
 	}
 ]

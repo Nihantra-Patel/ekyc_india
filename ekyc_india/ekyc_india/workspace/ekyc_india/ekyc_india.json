@@ -1,8 +1,8 @@
 {
  "app": "ekyc_india",
  "charts": [],
- "content": "[{\"id\":\"hdr_shortcuts\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"sc_settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Digio Settings\",\"col\":4}},{\"id\":\"sc_request_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Digio Request Log\",\"col\":4}},{\"id\":\"spacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_masters\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Masters &amp; Settings</b></span>\",\"col\":12}},{\"id\":\"card_ekyc\",\"type\":\"card\",\"data\":{\"card_name\":\"Ekyc India\",\"col\":4}}]",
- "creation": "2026-06-10 17:38:39.745528",
+ "content": "[{\"id\":\"hdr_shortcuts\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"sc_settings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Digio Settings\",\"col\":4}},{\"id\":\"sc_request_log\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Digio Request Log\",\"col\":4}},{\"id\":\"spacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_masters\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Masters &amp; Settings</b></span>\",\"col\":12}},{\"id\":\"card_ekyc\",\"type\":\"card\",\"data\":{\"card_name\":\"eKYC India\",\"col\":4}}]",
+ "creation": "2026-06-10 18:23:51.628348",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -12,13 +12,13 @@
  "idx": 0,
  "indicator_color": "",
  "is_hidden": 0,
- "label": "Ekyc India",
- "link_type": "DocType",
+ "label": "eKYC India",
+ "link_type": "",
  "links": [
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Ekyc India",
+   "label": "eKYC India",
    "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
@@ -47,10 +47,10 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-10 17:38:39.745528",
+ "modified": "2026-06-10 18:25:23.340946",
  "modified_by": "Administrator",
  "module": "Ekyc India",
- "name": "Ekyc India",
+ "name": "eKYC India",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -75,6 +75,6 @@
    "type": "DocType"
   }
  ],
- "title": "Ekyc India",
+ "title": "eKYC India",
  "type": "Workspace"
 }
