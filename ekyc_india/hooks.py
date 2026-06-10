@@ -4,9 +4,19 @@ app_publisher = "hello@frappe.io"
 app_description = "Indian compliance integrations"
 app_email = "hello@frappe.io"
 app_license = "mit"
+app_logo_url = "/assets/ekyc_india/images/ekyc_india.svg"
 
 # Apps
 # ------------------
+
+add_to_apps_screen = [
+	{
+		"name": "ekyc_india",
+		"logo": "/assets/ekyc_india/images/ekyc_india.svg",
+		"title": "Ekyc India",
+		"route": "/app/ekyc-india",
+	}
+]
 
 # required_apps = []
 

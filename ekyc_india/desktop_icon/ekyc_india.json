@@ -1,0 +1,21 @@
+{
+ "app": "ekyc_india",
+ "bg_color": "gray",
+ "creation": "2026-06-10 17:48:20.374404",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 0,
+ "label": "Ekyc India",
+ "link": "/app/ekyc-india",
+ "link_type": "External",
+ "logo_url": "/assets/ekyc_india/images/ekyc_india.svg",
+ "modified": "2026-06-10 17:48:20.374404",
+ "modified_by": "Administrator",
+ "name": "Ekyc India",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}
