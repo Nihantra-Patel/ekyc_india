@@ -21,6 +21,8 @@ class DigioSettings(Document):
 
 
 def make_esignature_request(doc):
+	check_kfs_before_esign(doc)
+
 	general_settings = get_general_settings()
 	signers = [
 		{
@@ -51,6 +53,25 @@ def make_esignature_request(doc):
 	)
 
 	save_request_log(response, linked_doctype=doc.doctype, linked_docname=doc.name, request_type="eSign")
+
+
+def check_kfs_before_esign(doc):
+	if doc.doctype != "Loan Application" or "lending" not in frappe.get_installed_apps():
+		return
+
+	if not frappe.db.get_single_value("Digio Settings", "enforce_kfs_before_esign"):
+		return
+
+	if not doc.get("kfs_generated"):
+		frappe.throw(_("Please generate the Key Facts Statement (KFS) before requesting eSignature."))
+
+	if not doc.get("borrower_acknowledged"):
+		frappe.throw(
+			_(
+				"The borrower must acknowledge understanding of the Key Facts Statement (KFS) "
+				"before requesting eSignature."
+			)
+		)
 
 
 # Outbound — eKYC
