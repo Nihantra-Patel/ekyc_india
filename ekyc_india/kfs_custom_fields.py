@@ -157,8 +157,18 @@ KFS_CUSTOM_FIELDS = {
 			"fieldtype": "Check",
 			"label": "Borrower Acknowledged Understanding",
 			"default": "0",
+			"read_only": 1,
+			"no_copy": 1,
 			"description": "Borrower has been explained and has acknowledged understanding of the Key Facts Statement.",
 			"insert_after": "kfs_acknowledgement_section",
+		},
+		{
+			"fieldname": "acknowledge_kfs_button",
+			"fieldtype": "Button",
+			"label": "Record Borrower Acknowledgement",
+			"description": "Use only after the borrower has confirmed, in their own words, that the KFS was explained and understood.",
+			"depends_on": "eval: doc.kfs_generated == 1 && doc.borrower_acknowledged != 1",
+			"insert_after": "borrower_acknowledged",
 		},
 	]
 }

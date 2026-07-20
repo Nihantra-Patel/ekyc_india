@@ -7,7 +7,7 @@ import unittest
 import frappe
 from frappe.tests import IntegrationTestCase, UnitTestCase
 
-from ekyc_india.kfs import add_working_days, build_kfs, xirr
+from ekyc_india.kfs import acknowledge_kfs, add_working_days, build_kfs, xirr
 
 LENDING_INSTALLED = "lending" in frappe.get_installed_apps()
 
@@ -164,3 +164,20 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		frappe.db.set_single_value("Digio Settings", "enforce_kfs_before_esign", 0)
 		check_kfs_before_esign(doc)
 		frappe.db.set_single_value("Digio Settings", "enforce_kfs_before_esign", 1)
+
+	def test_borrower_acknowledged_is_read_only(self):
+		field = frappe.get_meta("Loan Application").get_field("borrower_acknowledged")
+		self.assertEqual(field.read_only, 1)
+
+	def test_acknowledge_kfs_requires_kfs_generated(self):
+		doc = self.make_application()
+		doc.db_set("kfs_generated", 0)
+		self.assertRaises(frappe.ValidationError, acknowledge_kfs, doc.name)
+
+	def test_acknowledge_kfs_sets_flag(self):
+		doc = self.make_application()
+		self.assertFalse(doc.borrower_acknowledged)
+
+		acknowledge_kfs(doc.name)
+
+		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)

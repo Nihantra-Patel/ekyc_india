@@ -91,7 +91,7 @@ def build_kfs_schedule(doc):
 	balance = flt(doc.loan_amount)
 	epi = flt(doc.repayment_amount)
 	monthly_rate = flt(doc.rate_of_interest) / (12 * 100)
-	payment_date = getdate(doc.posting_date)
+	payment_date = getdate()
 
 	for instalment_no in range(1, cint(doc.repayment_periods) + 1):
 		interest_amount = rounded(balance * monthly_rate)
@@ -132,7 +132,7 @@ def calculate_apr(doc):
 		doc.annual_percentage_rate = doc.rate_of_interest
 		return
 
-	cash_flows = [(getdate(doc.posting_date), -flt(doc.net_disbursed_amount))]
+	cash_flows = [(getdate(), -flt(doc.net_disbursed_amount))]
 	for row in doc.kfs_schedule:
 		cash_flows.append((getdate(row.payment_date), flt(row.instalment_amount)))
 
@@ -209,4 +209,17 @@ def generate_kfs(loan_application: str):
 	doc.check_permission("write")
 	build_kfs(doc)
 	doc.save()
+	return doc.name
+
+
+@frappe.whitelist()
+@if_lending_app_installed
+def acknowledge_kfs(loan_application: str):
+	doc = frappe.get_doc("Loan Application", loan_application)
+	doc.check_permission("write")
+
+	if not doc.get("kfs_generated"):
+		frappe.throw(_("Generate the Key Facts Statement (KFS) before recording acknowledgement."))
+
+	doc.db_set("borrower_acknowledged", 1)
 	return doc.name
