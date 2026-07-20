@@ -11,7 +11,6 @@ from ekyc_india.lending_utils import if_lending_app_installed
 @if_lending_app_installed
 def loan_application_before_save(doc, method=None):
 	if doc.get("kfs_generated"):
-		build_kfs(doc)
 		return
 
 	if (
