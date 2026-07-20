@@ -63,7 +63,7 @@ KFS_CUSTOM_FIELDS = {
 			"label": "KFS Valid Till",
 			"read_only": 1,
 			"no_copy": 1,
-			"description": "Borrower has at least 3 working days (1 working day for tenor below 7 days) to accept the KFS.",
+			"description": "Borrower has at least 3 working days to accept the KFS.",
 			"insert_after": "column_break_kfs_a",
 		},
 		{
