@@ -44,6 +44,7 @@ def build_kfs(doc):
 	build_kfs_schedule(doc)
 	calculate_apr(doc)
 	doc.kfs_generated = 1
+	doc.borrower_acknowledged = 0
 
 
 def set_kfs_validity(doc):

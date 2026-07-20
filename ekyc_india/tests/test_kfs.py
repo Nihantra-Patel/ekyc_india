@@ -181,3 +181,13 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		acknowledge_kfs(doc.name)
 
 		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
+
+	def test_regenerating_kfs_resets_acknowledgement(self):
+		doc = self.make_application()
+		acknowledge_kfs(doc.name)
+		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
+
+		doc.reload()
+		build_kfs(doc)
+
+		self.assertEqual(doc.borrower_acknowledged, 0)
