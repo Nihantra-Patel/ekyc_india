@@ -47,9 +47,7 @@ def build_kfs(doc):
 
 
 def set_kfs_validity(doc):
-	tenor_days = flt(doc.repayment_periods) * 30
-	working_days = 3 if tenor_days >= 7 else 1
-	doc.kfs_valid_till = add_working_days(getdate(doc.posting_date), working_days)
+	doc.kfs_valid_till = add_working_days(getdate(doc.posting_date), 3)
 
 
 def set_kfs_charges(doc):
