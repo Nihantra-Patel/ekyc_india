@@ -68,6 +68,17 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		)
 		cls.applicant = make_employee("kfs_kate@loan.com", "_Test Company")
 
+		if not frappe.db.exists("Item", "Processing Fee"):
+			frappe.get_doc(
+				{
+					"doctype": "Item",
+					"item_code": "Processing Fee",
+					"item_name": "Processing Fee",
+					"item_group": "All Item Groups",
+					"is_stock_item": 0,
+				}
+			).insert(ignore_permissions=True)
+
 	def make_application(self):
 		loan_application = frappe.new_doc("Loan Application")
 		loan_application.update(
@@ -114,7 +125,7 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		doc.append(
 			"kfs_charges",
 			{
-				"charge_name": "Processing Fee",
+				"charge": "Processing Fee",
 				"payable_to": "Regulated Entity",
 				"amount": 5000,
 				"included_in_apr": 1,

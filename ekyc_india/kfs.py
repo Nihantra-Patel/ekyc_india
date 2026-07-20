@@ -60,15 +60,20 @@ def set_kfs_charges(doc):
 	product_charges = frappe.get_all(
 		"Loan Charges",
 		filters={"parent": doc.loan_product},
-		fields=["charge_type", "amount"],
+		fields=["charge_type", "charge_based_on", "amount", "percentage"],
 	)
 	for charge in product_charges:
+		if charge.charge_based_on == "Percentage":
+			amount = flt(doc.loan_amount) * flt(charge.percentage) / 100
+		else:
+			amount = flt(charge.amount)
+
 		doc.append(
 			"kfs_charges",
 			{
-				"charge_name": charge.charge_type,
+				"charge": charge.charge_type,
 				"payable_to": "Regulated Entity",
-				"amount": flt(charge.amount),
+				"amount": amount,
 				"included_in_apr": 1,
 			},
 		)

@@ -15,7 +15,8 @@ class LoanApplicationCharge(Document):
 		from frappe.types import DF
 
 		amount: DF.Currency
-		charge_name: DF.Data
+		charge: DF.Link
+		charge_name: DF.Data | None
 		included_in_apr: DF.Check
 		parent: DF.Data
 		parentfield: DF.Data
