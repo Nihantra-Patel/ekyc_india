@@ -47,7 +47,7 @@ def build_kfs(doc):
 
 
 def set_kfs_validity(doc):
-	doc.kfs_valid_till = add_working_days(getdate(doc.posting_date), 3)
+	doc.kfs_valid_till = add_working_days(getdate(), 3, holiday_list=get_holiday_list(doc))
 
 
 def set_kfs_charges(doc):
@@ -140,12 +140,25 @@ def calculate_apr(doc):
 	doc.annual_percentage_rate = rounded(apr * 100, 2) if apr is not None else doc.rate_of_interest
 
 
-def add_working_days(start_date, working_days):
+def get_holiday_list(doc):
+	if not doc.get("company"):
+		return None
+	return frappe.db.get_value("Company", doc.company, "default_holiday_list")
+
+
+def add_working_days(start_date, working_days, holiday_list=None):
+	holidays = set()
+	if holiday_list:
+		holidays = {
+			getdate(d)
+			for d in frappe.get_all("Holiday", filters={"parent": holiday_list}, pluck="holiday_date")
+		}
+
 	current = getdate(start_date)
 	added = 0
 	while added < working_days:
 		current = add_days(current, 1)
-		if current.weekday() < 5:
+		if current.weekday() < 5 and current not in holidays:
 			added += 1
 	return current
 
