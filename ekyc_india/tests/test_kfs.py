@@ -153,7 +153,7 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		)
 
 		doc = self.make_application()
-		frappe.db.set_single_value("Digio Settings", "enforce_kfs_before_esign", 1)
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
 		self.assertRaises(frappe.ValidationError, check_kfs_before_esign, doc)
 
@@ -161,9 +161,9 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		check_kfs_before_esign(doc)
 
 		doc.borrower_acknowledged = 0
-		frappe.db.set_single_value("Digio Settings", "enforce_kfs_before_esign", 0)
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 0)
 		check_kfs_before_esign(doc)
-		frappe.db.set_single_value("Digio Settings", "enforce_kfs_before_esign", 1)
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
 	def test_borrower_acknowledged_is_read_only(self):
 		field = frappe.get_meta("Loan Application").get_field("borrower_acknowledged")

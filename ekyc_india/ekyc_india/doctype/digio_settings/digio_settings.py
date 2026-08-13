@@ -59,7 +59,7 @@ def check_kfs_before_esign(doc):
 	if doc.doctype != "Loan Application" or "lending" not in frappe.get_installed_apps():
 		return
 
-	if not frappe.db.get_single_value("Digio Settings", "enforce_kfs_before_esign"):
+	if not frappe.db.get_single_value("Loan Origination Settings", "enforce_kfs_before_esign"):
 		return
 
 	if not doc.get("kfs_generated"):

@@ -1,5 +1,3 @@
-from ekyc_india.kfs_custom_fields import KFS_CUSTOM_FIELD_NAMES
-
 app_name = "ekyc_india"
 app_title = "eKYC India"
 app_publisher = "hello@frappe.io"
@@ -271,13 +269,9 @@ workflow_methods = [
 
 # Fixtures
 # --------
-# Export the KFS custom fields (on Loan Application) and the KFS print format
-# so they ship with the app.
+# Custom fields are created via create_kfs_custom_fields() (see install.py /
+# patches/add_kfs_custom_fields.py); only the KFS print format ships as a fixture.
 fixtures = [
-	{
-		"dt": "Custom Field",
-		"filters": [["dt", "=", "Loan Application"], ["fieldname", "in", KFS_CUSTOM_FIELD_NAMES]],
-	},
 	{
 		"dt": "Print Format",
 		"filters": [["name", "=", "Key Facts Statement"]],

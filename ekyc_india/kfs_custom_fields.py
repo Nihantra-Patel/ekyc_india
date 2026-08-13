@@ -7,6 +7,22 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from ekyc_india.lending_utils import if_lending_app_installed
 
 KFS_CUSTOM_FIELDS = {
+	"Loan Origination Settings": [
+		{
+			"fieldname": "kfs_settings_section",
+			"fieldtype": "Section Break",
+			"label": "Key Facts Statement (KFS)",
+			"insert_after": "employee_loans",
+		},
+		{
+			"fieldname": "enforce_kfs_before_esign",
+			"fieldtype": "Check",
+			"label": "Enforce KFS before eSignature",
+			"default": "1",
+			"description": "As per RBI norms, block the eSignature request until the Key Facts Statement is generated and acknowledged by the borrower.",
+			"insert_after": "kfs_settings_section",
+		},
+	],
 	"Loan Application": [
 		{
 			"fieldname": "kfs_tab",
@@ -34,7 +50,7 @@ KFS_CUSTOM_FIELDS = {
 			"fieldtype": "Button",
 			"label": "Regenerate KFS",
 			"description": "Refresh the KFS on demand, e.g. after changing fees or charges.",
-			"depends_on": "eval: doc.is_term_loan == 1 && doc.kfs_generated == 1",
+			"depends_on": "eval: !doc.__islocal && doc.is_term_loan == 1 && doc.kfs_generated == 1",
 			"insert_after": "kfs_section",
 		},
 		{
@@ -170,11 +186,13 @@ KFS_CUSTOM_FIELDS = {
 			"depends_on": "eval: doc.kfs_generated == 1 && doc.borrower_acknowledged != 1",
 			"insert_after": "borrower_acknowledged",
 		},
-	]
+	],
 }
 
 
-KFS_CUSTOM_FIELD_NAMES = [field["fieldname"] for fields in KFS_CUSTOM_FIELDS.values() for field in fields]
+KFS_CUSTOM_FIELD_NAMES_BY_DOCTYPE = {
+	doctype: [field["fieldname"] for field in fields] for doctype, fields in KFS_CUSTOM_FIELDS.items()
+}
 
 KFS_OBSOLETE_FIELD_NAMES = [
 	"interest_rate_type",
@@ -201,7 +219,8 @@ def create_kfs_custom_fields():
 
 @if_lending_app_installed
 def remove_kfs_custom_fields():
-	for fieldname in KFS_CUSTOM_FIELD_NAMES:
-		name = frappe.db.get_value("Custom Field", {"dt": "Loan Application", "fieldname": fieldname})
-		if name:
-			frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)
+	for doctype, fieldnames in KFS_CUSTOM_FIELD_NAMES_BY_DOCTYPE.items():
+		for fieldname in fieldnames:
+			name = frappe.db.get_value("Custom Field", {"dt": doctype, "fieldname": fieldname})
+			if name:
+				frappe.delete_doc("Custom Field", name, ignore_permissions=True, force=True)

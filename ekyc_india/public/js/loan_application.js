@@ -7,10 +7,6 @@
 
 frappe.ui.form.on("Loan Application", {
 	generate_kfs_button: function (frm) {
-		if (frm.doc.__islocal) {
-			frappe.msgprint(__("Please save the Loan Application before generating the KFS."));
-			return;
-		}
 		frappe.call({
 			method: "ekyc_india.kfs.generate_kfs",
 			args: { loan_application: frm.doc.name },

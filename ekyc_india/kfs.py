@@ -3,16 +3,13 @@
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, add_to_date, cint, flt, getdate, rounded
+from frappe.utils import add_days, flt, getdate, rounded
 
 from ekyc_india.lending_utils import if_lending_app_installed
 
 
 @if_lending_app_installed
 def loan_application_before_save(doc, method=None):
-	if doc.get("kfs_generated"):
-		return
-
 	if (
 		doc.get("is_term_loan")
 		and doc.get("loan_amount")
@@ -48,7 +45,7 @@ def build_kfs(doc):
 
 
 def set_kfs_validity(doc):
-	doc.kfs_valid_till = add_working_days(getdate(), 3, holiday_list=get_holiday_list(doc))
+	doc.kfs_valid_till = add_working_days(getdate(), 3)
 
 
 def set_kfs_charges(doc):
@@ -89,40 +86,39 @@ def get_total_kfs_charges(doc, only_apr=False):
 def build_kfs_schedule(doc):
 	doc.set("kfs_schedule", [])
 
-	balance = flt(doc.loan_amount)
-	epi = flt(doc.repayment_amount)
-	monthly_rate = flt(doc.rate_of_interest) / (12 * 100)
-	payment_date = getdate()
-
-	for instalment_no in range(1, cint(doc.repayment_periods) + 1):
-		interest_amount = rounded(balance * monthly_rate)
-		principal_amount = rounded(epi - interest_amount)
-
-		if instalment_no == cint(doc.repayment_periods) or principal_amount > balance:
-			principal_amount = balance
-			epi_amount = rounded(principal_amount + interest_amount)
-		else:
-			epi_amount = epi
-
-		opening_balance = balance
-		balance = rounded(balance - principal_amount)
-
-		payment_date = add_to_date(payment_date, months=1)
-
+	for instalment_no, row in enumerate(get_proposed_repayment_schedule(doc), start=1):
 		doc.append(
 			"kfs_schedule",
 			{
 				"instalment_no": instalment_no,
-				"payment_date": payment_date,
-				"outstanding_principal": opening_balance,
-				"principal_amount": principal_amount,
-				"interest_amount": interest_amount,
-				"instalment_amount": epi_amount,
+				"payment_date": row.payment_date,
+				"outstanding_principal": flt(row.balance_loan_amount) + flt(row.principal_amount),
+				"principal_amount": row.principal_amount,
+				"interest_amount": row.interest_amount,
+				"instalment_amount": row.total_payment,
 			},
 		)
 
-		if balance <= 0:
-			break
+
+def get_proposed_repayment_schedule(doc):
+	repayment_schedule = frappe.new_doc("Loan Repayment Schedule")
+	repayment_schedule.loan_product = doc.loan_product
+	repayment_schedule.repayment_frequency = "Monthly"
+	repayment_schedule.repayment_method = "Repay Over Number of Periods"
+	repayment_schedule.repayment_periods = doc.repayment_periods
+	repayment_schedule.rate_of_interest = doc.rate_of_interest
+	repayment_schedule.posting_date = getdate()
+	repayment_schedule.repayment_start_date = getdate()
+	repayment_schedule.loan_amount = doc.loan_amount
+	repayment_schedule.current_principal_amount = doc.loan_amount
+	repayment_schedule.moratorium_tenure = 0
+	repayment_schedule.moratorium_type = ""
+	repayment_schedule.repayment_schedule_type = frappe.db.get_value(
+		"Loan Product", doc.loan_product, "repayment_schedule_type"
+	)
+	repayment_schedule.validate()
+
+	return repayment_schedule.get("repayment_schedule")
 
 
 def calculate_apr(doc):
@@ -141,25 +137,12 @@ def calculate_apr(doc):
 	doc.annual_percentage_rate = rounded(apr * 100, 2) if apr is not None else doc.rate_of_interest
 
 
-def get_holiday_list(doc):
-	if not doc.get("company"):
-		return None
-	return frappe.db.get_value("Company", doc.company, "default_holiday_list")
-
-
-def add_working_days(start_date, working_days, holiday_list=None):
-	holidays = set()
-	if holiday_list:
-		holidays = {
-			getdate(d)
-			for d in frappe.get_all("Holiday", filters={"parent": holiday_list}, pluck="holiday_date")
-		}
-
+def add_working_days(start_date, working_days):
 	current = getdate(start_date)
 	added = 0
 	while added < working_days:
 		current = add_days(current, 1)
-		if current.weekday() < 5 and current not in holidays:
+		if current.weekday() < 5:
 			added += 1
 	return current
 

@@ -14,9 +14,9 @@ def execute():
 	create_kfs_custom_fields()
 	remove_obsolete_kfs_fields()
 
-	for fields in KFS_CUSTOM_FIELDS.values():
+	for doctype, fields in KFS_CUSTOM_FIELDS.items():
 		for field in fields:
-			name = f"Loan Application-{field['fieldname']}"
+			name = f"{doctype}-{field['fieldname']}"
 			if frappe.db.exists("Custom Field", name):
 				frappe.db.set_value(
 					"Custom Field",
