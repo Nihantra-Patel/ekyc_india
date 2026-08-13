@@ -83,39 +83,11 @@ KFS_CUSTOM_FIELDS = {
 			"insert_after": "column_break_kfs_a",
 		},
 		{
-			"fieldname": "net_disbursed_amount",
-			"fieldtype": "Currency",
-			"label": "Net Disbursed Amount",
-			"read_only": 1,
-			"insert_after": "kfs_valid_till",
-		},
-		{
-			"fieldname": "annual_percentage_rate",
-			"fieldtype": "Percent",
-			"label": "Annual Percentage Rate (APR)",
-			"read_only": 1,
-			"description": "All-inclusive annual cost of credit including interest and all charges.",
-			"insert_after": "net_disbursed_amount",
-		},
-		{
-			"fieldname": "kfs_charges_section",
-			"fieldtype": "Section Break",
-			"label": "Fees / Charges",
-			"insert_after": "annual_percentage_rate",
-		},
-		{
-			"fieldname": "kfs_charges",
-			"fieldtype": "Table",
-			"label": "Fees / Charges",
-			"options": "Loan Application Charge",
-			"insert_after": "kfs_charges_section",
-		},
-		{
 			"fieldname": "kfs_schedule_section",
 			"fieldtype": "Section Break",
 			"label": "Repayment Schedule (Annex C)",
 			"collapsible": 1,
-			"insert_after": "kfs_charges",
+			"insert_after": "kfs_valid_till",
 		},
 		{
 			"fieldname": "kfs_schedule",
@@ -201,6 +173,10 @@ KFS_OBSOLETE_FIELD_NAMES = [
 	"spread_over_benchmark",
 	"column_break_kfs_b",
 	"reset_periodicity",
+	"kfs_charges_section",
+	"kfs_charges",
+	"net_disbursed_amount",
+	"annual_percentage_rate",
 ]
 
 

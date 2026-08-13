@@ -18,6 +18,5 @@ def remove_kfs_print_format():
 
 
 def remove_kfs_child_doctypes():
-	for doctype in ("Loan Application Charge", "Loan Application KFS Schedule"):
-		if frappe.db.exists("DocType", doctype):
-			frappe.delete_doc("DocType", doctype, ignore_permissions=True, force=True)
+	if frappe.db.exists("DocType", "Loan Application KFS Schedule"):
+		frappe.delete_doc("DocType", "Loan Application KFS Schedule", ignore_permissions=True, force=True)

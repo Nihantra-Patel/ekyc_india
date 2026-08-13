@@ -7,7 +7,7 @@ import unittest
 import frappe
 from frappe.tests import IntegrationTestCase, UnitTestCase
 
-from ekyc_india.kfs import acknowledge_kfs, add_working_days, build_kfs, xirr
+from ekyc_india.kfs import acknowledge_kfs, add_working_days, build_kfs
 
 LENDING_INSTALLED = "lending" in frappe.get_installed_apps()
 
@@ -20,27 +20,6 @@ class UnitTestKFSCalculations(UnitTestCase):
 	def test_add_one_working_day(self):
 		friday = datetime.date(2026, 6, 19)
 		self.assertEqual(add_working_days(friday, 1), datetime.date(2026, 6, 22))
-
-	def test_xirr_matches_nominal_rate_without_charges(self):
-		loan, rate, n = 100000.0, 12.0, 12
-		monthly = rate / 1200
-		epi = loan * monthly * (1 + monthly) ** n / ((1 + monthly) ** n - 1)
-
-		start = datetime.date(2026, 1, 1)
-		cash_flows = [(start, -loan)]
-		due = start
-		for _i in range(n):
-			month = due.month % 12 + 1
-			year = due.year + (1 if due.month == 12 else 0)
-			due = datetime.date(year, month, 1)
-			cash_flows.append((due, epi))
-
-		apr = xirr(cash_flows) * 100
-		self.assertGreater(apr, 12.0)
-		self.assertLess(apr, 13.0)
-
-	def test_xirr_returns_none_for_empty(self):
-		self.assertIsNone(xirr([]))
 
 
 @unittest.skipUnless(LENDING_INSTALLED, "Lending app is not installed")
@@ -67,17 +46,6 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 			repayment_schedule_type="Monthly as per repayment start date",
 		)
 		cls.applicant = make_employee("kfs_kate@loan.com", "_Test Company")
-
-		if not frappe.db.exists("Item", "Processing Fee"):
-			frappe.get_doc(
-				{
-					"doctype": "Item",
-					"item_code": "Processing Fee",
-					"item_name": "Processing Fee",
-					"item_group": "All Item Groups",
-					"is_stock_item": 0,
-				}
-			).insert(ignore_permissions=True)
 
 	def make_application(self):
 		loan_application = frappe.new_doc("Loan Application")
@@ -120,22 +88,6 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		closing_balance = last_row.outstanding_principal - last_row.principal_amount
 		self.assertAlmostEqual(closing_balance, 0, delta=1)
 
-	def test_kfs_apr_includes_charges(self):
-		doc = self.make_application()
-		doc.append(
-			"kfs_charges",
-			{
-				"charge": "Processing Fee",
-				"payable_to": "Regulated Entity",
-				"amount": 5000,
-				"included_in_apr": 1,
-			},
-		)
-		build_kfs(doc)
-
-		self.assertEqual(doc.net_disbursed_amount, doc.loan_amount - 5000)
-		self.assertGreater(doc.annual_percentage_rate, doc.rate_of_interest)
-
 	def test_kfs_requires_term_loan(self):
 		doc = self.make_application()
 		doc.is_term_loan = 0
@@ -144,26 +96,51 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 	def test_kfs_auto_generated_on_save(self):
 		doc = self.make_application()
 		self.assertTrue(doc.kfs_generated)
-		self.assertTrue(doc.annual_percentage_rate)
 		self.assertEqual(len(doc.kfs_schedule), doc.repayment_periods)
 
-	def test_esign_blocked_until_kfs_acknowledged(self):
+	def test_esign_blocked_until_kfs_generated(self):
 		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import (
 			check_kfs_before_esign,
 		)
 
 		doc = self.make_application()
+		doc.db_set("kfs_generated", 0)
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
 		self.assertRaises(frappe.ValidationError, check_kfs_before_esign, doc)
 
-		doc.borrower_acknowledged = 1
+		doc.db_set("kfs_generated", 1)
 		check_kfs_before_esign(doc)
 
-		doc.borrower_acknowledged = 0
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 0)
+		doc.db_set("kfs_generated", 0)
 		check_kfs_before_esign(doc)
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
+
+	def test_esign_print_format_is_kfs_when_enforced(self):
+		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import get_esign_print_format
+
+		doc = self.make_application()
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
+
+		self.assertEqual(get_esign_print_format(doc), "Key Facts Statement")
+
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 0)
+		self.assertIsNone(get_esign_print_format(doc))
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
+
+	def test_signed_webhook_acknowledges_kfs(self):
+		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import (
+			acknowledge_kfs_on_signed,
+		)
+
+		doc = self.make_application()
+		self.assertFalse(doc.borrower_acknowledged)
+
+		log = frappe._dict(linked_doctype="Loan Application", linked_docname=doc.name)
+		acknowledge_kfs_on_signed(log)
+
+		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
 
 	def test_borrower_acknowledged_is_read_only(self):
 		field = frappe.get_meta("Loan Application").get_field("borrower_acknowledged")
