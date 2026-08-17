@@ -59,7 +59,7 @@ def get_esign_print_format(doc):
 	if (
 		doc.doctype == "Loan Application"
 		and "lending" in frappe.get_installed_apps()
-		and doc.get("kfs_generated")
+		and doc.get("kfs_valid_till")
 		and frappe.db.get_single_value("Loan Origination Settings", "enforce_kfs_before_esign")
 	):
 		return "Key Facts Statement"
@@ -73,7 +73,7 @@ def check_kfs_before_esign(doc):
 	if not frappe.db.get_single_value("Loan Origination Settings", "enforce_kfs_before_esign"):
 		return
 
-	if not doc.get("kfs_generated"):
+	if not doc.get("kfs_valid_till"):
 		frappe.throw(_("Please generate the Key Facts Statement (KFS) before requesting eSignature."))
 
 

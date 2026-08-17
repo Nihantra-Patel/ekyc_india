@@ -38,7 +38,6 @@ def build_kfs(doc):
 
 	set_kfs_validity(doc)
 	build_kfs_schedule(doc)
-	doc.kfs_generated = 1
 	doc.borrower_acknowledged = 0
 
 
@@ -96,21 +95,11 @@ def add_working_days(start_date, working_days):
 
 @frappe.whitelist()
 @if_lending_app_installed
-def generate_kfs(loan_application: str):
-	doc = frappe.get_doc("Loan Application", loan_application)
-	doc.check_permission("write")
-	build_kfs(doc)
-	doc.save()
-	return doc.name
-
-
-@frappe.whitelist()
-@if_lending_app_installed
 def acknowledge_kfs(loan_application: str):
 	doc = frappe.get_doc("Loan Application", loan_application)
 	doc.check_permission("write")
 
-	if not doc.get("kfs_generated"):
+	if not doc.get("kfs_valid_till"):
 		frappe.throw(_("Generate the Key Facts Statement (KFS) before recording acknowledgement."))
 
 	doc.db_set("borrower_acknowledged", 1)

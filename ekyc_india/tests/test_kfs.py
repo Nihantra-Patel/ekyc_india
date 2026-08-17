@@ -70,7 +70,6 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		doc = self.make_application()
 		build_kfs(doc)
 
-		self.assertTrue(doc.kfs_generated)
 		self.assertTrue(doc.unique_proposal_number)
 		self.assertTrue(doc.kfs_valid_till)
 		self.assertEqual(len(doc.kfs_schedule), doc.repayment_periods)
@@ -95,7 +94,7 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 
 	def test_kfs_auto_generated_on_save(self):
 		doc = self.make_application()
-		self.assertTrue(doc.kfs_generated)
+		self.assertTrue(doc.kfs_valid_till)
 		self.assertEqual(len(doc.kfs_schedule), doc.repayment_periods)
 
 	def test_esign_blocked_until_kfs_generated(self):
@@ -104,16 +103,16 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		)
 
 		doc = self.make_application()
-		doc.db_set("kfs_generated", 0)
+		doc.db_set("kfs_valid_till", None)
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
 		self.assertRaises(frappe.ValidationError, check_kfs_before_esign, doc)
 
-		doc.db_set("kfs_generated", 1)
+		doc.reload()
 		check_kfs_before_esign(doc)
 
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 0)
-		doc.db_set("kfs_generated", 0)
+		doc.db_set("kfs_valid_till", None)
 		check_kfs_before_esign(doc)
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
@@ -148,7 +147,7 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 
 	def test_acknowledge_kfs_requires_kfs_generated(self):
 		doc = self.make_application()
-		doc.db_set("kfs_generated", 0)
+		doc.db_set("kfs_valid_till", None)
 		self.assertRaises(frappe.ValidationError, acknowledge_kfs, doc.name)
 
 	def test_acknowledge_kfs_sets_flag(self):
