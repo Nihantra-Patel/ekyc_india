@@ -125,7 +125,7 @@
    "label": "Webhook Settings"
   },
   {
-   "description": "Shared secret Digio sends as the <code>x-digio-webhook-secret</code> request header. Configure the same value in the Digio dashboard webhook settings. Do not reuse the API Secret.",
+   "description": "Shared secret used to verify the <code>X-Digio-Checksum</code> header (HMAC-SHA256 of the request body) Digio sends with each webhook. Configure the same value as the Group Secret in the Digio dashboard webhook settings. Do not reuse the API Secret.",
    "fieldname": "webhook_secret",
    "fieldtype": "Password",
    "label": "Webhook Secret"
@@ -158,7 +158,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-09 16:20:26.555451",
+ "modified": "2026-08-17 16:30:00.000000",
  "modified_by": "Administrator",
  "module": "Ekyc India",
  "name": "Digio Settings",

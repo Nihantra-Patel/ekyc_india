@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import base64
+import hashlib
 import hmac
 import json
 
@@ -121,8 +122,10 @@ def verify_webhook_credentials():
 		# Fail-secure: refuse all webhooks until a secret is configured.
 		frappe.throw(_("Digio webhook secret is not configured"), frappe.AuthenticationError)
 
-	provided = frappe.request.headers.get("x-digio-webhook-secret", "")
-	if not provided or not hmac.compare_digest(provided, expected_secret):
+	provided_checksum = frappe.request.headers.get("X-Digio-Checksum", "")
+	computed_checksum = hmac.new(expected_secret.encode(), frappe.request.data, hashlib.sha256).hexdigest()
+
+	if not provided_checksum or not hmac.compare_digest(provided_checksum, computed_checksum):
 		frappe.throw(_("Digio webhook authentication failed"), frappe.AuthenticationError)
 
 
