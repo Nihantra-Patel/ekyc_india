@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import hashlib
+
 import frappe
 from frappe import _
 from frappe.utils import add_days, flt, getdate
@@ -36,19 +38,39 @@ def build_kfs(doc):
 	if not doc.get("loan_type"):
 		doc.loan_type = frappe.db.get_value("Loan Product", doc.loan_product, "product_name")
 
-	set_kfs_validity(doc)
-	build_kfs_schedule(doc)
-	doc.borrower_acknowledged = 0
+	schedule = get_proposed_repayment_schedule(doc)
+	set_kfs_validity(doc, schedule)
+	build_kfs_schedule(doc, schedule)
+
+	new_version = compute_kfs_version(doc)
+	if new_version != doc.get("kfs_version"):
+		doc.kfs_version = new_version
+		doc.borrower_acknowledged = 0
 
 
-def set_kfs_validity(doc):
-	doc.kfs_valid_till = add_working_days(getdate(), 3)
+def compute_kfs_version(doc):
+	terms = "|".join(
+		[
+			str(doc.get("loan_product")),
+			str(flt(doc.get("loan_amount"))),
+			str(flt(doc.get("rate_of_interest"))),
+			str(flt(doc.get("repayment_periods"))),
+		]
+	)
+	return hashlib.sha256(terms.encode()).hexdigest()[:10]
 
 
-def build_kfs_schedule(doc):
+def set_kfs_validity(doc, schedule):
+	# RBI: validity is 3 working days, except loans with tenor under 7 days get 1 working day.
+	tenor_days = (getdate(schedule[-1].payment_date) - getdate()).days if schedule else 0
+	working_days = 1 if tenor_days < 7 else 3
+	doc.kfs_valid_till = add_working_days(getdate(), working_days)
+
+
+def build_kfs_schedule(doc, schedule):
 	doc.set("kfs_schedule", [])
 
-	for instalment_no, row in enumerate(get_proposed_repayment_schedule(doc), start=1):
+	for instalment_no, row in enumerate(schedule, start=1):
 		doc.append(
 			"kfs_schedule",
 			{

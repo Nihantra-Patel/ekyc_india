@@ -66,11 +66,20 @@ KFS_CUSTOM_FIELDS = {
 			"insert_after": "column_break_kfs_a",
 		},
 		{
+			"fieldname": "kfs_version",
+			"fieldtype": "Data",
+			"label": "KFS Version",
+			"hidden": 1,
+			"read_only": 1,
+			"no_copy": 1,
+			"insert_after": "kfs_valid_till",
+		},
+		{
 			"fieldname": "kfs_schedule_section",
 			"fieldtype": "Section Break",
 			"label": "Repayment Schedule (Annex C)",
 			"collapsible": 1,
-			"insert_after": "kfs_valid_till",
+			"insert_after": "kfs_version",
 		},
 		{
 			"fieldname": "kfs_schedule",

@@ -58,7 +58,7 @@ def make_esignature_request(doc):
 		linked_doctype=doc.doctype,
 		linked_docname=doc.name,
 		request_type="eSign",
-		kfs_valid_till=doc.get("kfs_valid_till"),
+		kfs_version=doc.get("kfs_version"),
 	)
 
 
@@ -217,11 +217,11 @@ def acknowledge_kfs_on_signed(log):
 	):
 		return
 
-	if not log.get("kfs_valid_till"):
+	if not log.get("kfs_version"):
 		return
 
-	current_kfs_valid_till = frappe.db.get_value("Loan Application", log.linked_docname, "kfs_valid_till")
-	if current_kfs_valid_till and getdate(current_kfs_valid_till) == getdate(log.kfs_valid_till):
+	current_kfs_version = frappe.db.get_value("Loan Application", log.linked_docname, "kfs_version")
+	if current_kfs_version and current_kfs_version == log.kfs_version:
 		frappe.db.set_value("Loan Application", log.linked_docname, "borrower_acknowledged", 1)
 
 
@@ -241,16 +241,14 @@ def get_document_data(payload):
 # Request log helpers
 
 
-def save_request_log(
-	response, linked_doctype=None, linked_docname=None, request_type=None, kfs_valid_till=None
-):
+def save_request_log(response, linked_doctype=None, linked_docname=None, request_type=None, kfs_version=None):
 	doc = frappe.new_doc("Digio Request Log")
 	doc.digio_id = response.get("id")
 	doc.response_json = json.dumps(response, indent=1)
 	doc.linked_doctype = linked_doctype
 	doc.linked_docname = linked_docname
 	doc.request_type = request_type
-	doc.kfs_valid_till = kfs_valid_till
+	doc.kfs_version = kfs_version
 	doc.status = "Pending"
 	doc.save(ignore_permissions=True)
 

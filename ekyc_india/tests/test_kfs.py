@@ -6,8 +6,9 @@ import unittest
 
 import frappe
 from frappe.tests import IntegrationTestCase, UnitTestCase
+from frappe.utils import add_days, getdate
 
-from ekyc_india.kfs import acknowledge_kfs, add_working_days, build_kfs
+from ekyc_india.kfs import acknowledge_kfs, add_working_days, build_kfs, set_kfs_validity
 
 LENDING_INSTALLED = "lending" in frappe.get_installed_apps()
 
@@ -87,6 +88,18 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		closing_balance = last_row.outstanding_principal - last_row.principal_amount
 		self.assertAlmostEqual(closing_balance, 0, delta=1)
 
+	def test_kfs_validity_is_one_working_day_for_short_tenor(self):
+		doc = self.make_application()
+		doc.repayment_periods = 1
+		schedule = [frappe._dict(payment_date=add_days(getdate(), 5))]
+		set_kfs_validity(doc, schedule)
+		self.assertEqual(doc.kfs_valid_till, add_working_days(getdate(), 1))
+
+	def test_kfs_validity_is_three_working_days_for_longer_tenor(self):
+		doc = self.make_application()
+		build_kfs(doc)
+		self.assertEqual(doc.kfs_valid_till, add_working_days(getdate(), 3))
+
 	def test_kfs_requires_term_loan(self):
 		doc = self.make_application()
 		doc.is_term_loan = 0
@@ -117,8 +130,6 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
 	def test_esign_blocked_when_kfs_expired(self):
-		from frappe.utils import add_days
-
 		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import (
 			check_kfs_before_esign,
 			get_esign_print_format,
@@ -127,7 +138,7 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		doc = self.make_application()
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
-		doc.db_set("kfs_valid_till", add_days(frappe.utils.getdate(), -1))
+		doc.db_set("kfs_valid_till", add_days(getdate(), -1))
 		self.assertRaises(frappe.ValidationError, check_kfs_before_esign, doc)
 		self.assertIsNone(get_esign_print_format(doc))
 
@@ -152,23 +163,29 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		self.assertFalse(doc.borrower_acknowledged)
 
 		log = frappe._dict(
-			linked_doctype="Loan Application", linked_docname=doc.name, kfs_valid_till=doc.kfs_valid_till
+			linked_doctype="Loan Application", linked_docname=doc.name, kfs_version=doc.kfs_version
 		)
 		acknowledge_kfs_on_signed(log)
 
 		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
 
-	def test_signed_webhook_ignores_stale_kfs(self):
+	def test_signed_webhook_ignores_stale_kfs_version(self):
 		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import (
 			acknowledge_kfs_on_signed,
 		)
 
 		doc = self.make_application()
-		stale_valid_till = add_working_days(doc.kfs_valid_till, 1)
-		self.assertNotEqual(doc.kfs_valid_till, stale_valid_till)
+		stale_version = doc.kfs_version
+
+		# Regenerate the KFS same-day: kfs_valid_till stays identical, but the
+		# version must still change so a delayed webhook for the earlier
+		# signed PDF cannot acknowledge the revised terms.
+		doc.loan_amount = 300000
+		doc.save()
+		self.assertNotEqual(doc.kfs_version, stale_version)
 
 		log = frappe._dict(
-			linked_doctype="Loan Application", linked_docname=doc.name, kfs_valid_till=stale_valid_till
+			linked_doctype="Loan Application", linked_docname=doc.name, kfs_version=stale_version
 		)
 		acknowledge_kfs_on_signed(log)
 
@@ -191,12 +208,25 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 
 		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
 
-	def test_regenerating_kfs_resets_acknowledgement(self):
+	def test_regenerating_kfs_with_changed_terms_resets_acknowledgement(self):
 		doc = self.make_application()
 		acknowledge_kfs(doc.name)
 		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
 
 		doc.reload()
+		doc.loan_amount = 300000
 		build_kfs(doc)
 
 		self.assertEqual(doc.borrower_acknowledged, 0)
+
+	def test_resaving_kfs_with_unchanged_terms_keeps_acknowledgement(self):
+		doc = self.make_application()
+		acknowledge_kfs(doc.name)
+		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
+
+		doc.reload()
+		version_before = doc.kfs_version
+		build_kfs(doc)
+
+		self.assertEqual(doc.kfs_version, version_before)
+		self.assertEqual(doc.borrower_acknowledged, 1)
