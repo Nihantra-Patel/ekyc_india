@@ -177,9 +177,7 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		doc = self.make_application()
 		stale_version = doc.kfs_version
 
-		# Regenerate the KFS same-day: kfs_valid_till stays identical, but the
-		# version must still change so a delayed webhook for the earlier
-		# signed PDF cannot acknowledge the revised terms.
+		# Changing terms same-day must still change kfs_version.
 		doc.loan_amount = 300000
 		doc.save()
 		self.assertNotEqual(doc.kfs_version, stale_version)

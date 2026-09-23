@@ -49,15 +49,18 @@ def build_kfs(doc):
 
 
 def compute_kfs_version(doc):
-	terms = "|".join(
-		[
-			str(doc.get("loan_product")),
-			str(flt(doc.get("loan_amount"))),
-			str(flt(doc.get("rate_of_interest"))),
-			str(flt(doc.get("repayment_periods"))),
-		]
-	)
-	return hashlib.sha256(terms.encode()).hexdigest()[:10]
+	# Hash the rendered KFS print format so the version reflects everything
+	# the borrower actually sees, not a hand-picked subset of fields. Fields
+	# that are an outcome of a version rather than part of its content are
+	# pinned so they don't affect the hash.
+	snapshot = frappe.copy_doc(doc, ignore_no_copy=True)
+	snapshot.name = "KFS-VERSION-SNAPSHOT"
+	snapshot.borrower_acknowledged = 0
+	snapshot.kfs_valid_till = "1970-01-01"
+
+	print_format = frappe.get_doc("Print Format", "Key Facts Statement")
+	html = frappe.render_template(print_format.html, {"doc": snapshot})
+	return hashlib.sha256(html.encode()).hexdigest()[:10]
 
 
 def set_kfs_validity(doc, schedule):
