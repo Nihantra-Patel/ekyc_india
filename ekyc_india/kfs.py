@@ -59,7 +59,8 @@ def compute_kfs_version(doc):
 	snapshot.kfs_valid_till = "1970-01-01"
 
 	print_format = frappe.get_doc("Print Format", "Key Facts Statement")
-	html = frappe.render_template(print_format.html, {"doc": snapshot})
+	# print_format.html is this app's own hardcoded "Key Facts Statement" format, not user input.
+	html = frappe.render_template(print_format.html, {"doc": snapshot})  # nosemgrep: frappe-ssti
 	return hashlib.sha256(html.encode()).hexdigest()[:10]
 
 
