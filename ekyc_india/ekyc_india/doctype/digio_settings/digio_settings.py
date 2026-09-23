@@ -10,7 +10,7 @@ import frappe
 from frappe import _
 from frappe.integrations.utils import make_request
 from frappe.model.document import Document
-from frappe.utils import now_datetime
+from frappe.utils import getdate, now_datetime
 from frappe.utils.password import get_decrypted_password
 
 
@@ -53,14 +53,20 @@ def make_esignature_request(doc):
 		json=body,
 	)
 
-	save_request_log(response, linked_doctype=doc.doctype, linked_docname=doc.name, request_type="eSign")
+	save_request_log(
+		response,
+		linked_doctype=doc.doctype,
+		linked_docname=doc.name,
+		request_type="eSign",
+		kfs_valid_till=doc.get("kfs_valid_till"),
+	)
 
 
 def get_esign_print_format(doc):
 	if (
 		doc.doctype == "Loan Application"
 		and "lending" in frappe.get_installed_apps()
-		and doc.get("kfs_valid_till")
+		and is_kfs_valid(doc)
 		and frappe.db.get_single_value("Loan Origination Settings", "enforce_kfs_before_esign")
 	):
 		return "Key Facts Statement"
@@ -74,8 +80,13 @@ def check_kfs_before_esign(doc):
 	if not frappe.db.get_single_value("Loan Origination Settings", "enforce_kfs_before_esign"):
 		return
 
-	if not doc.get("kfs_valid_till"):
+	if not is_kfs_valid(doc):
 		frappe.throw(_("Please generate the Key Facts Statement (KFS) before requesting eSignature."))
+
+
+def is_kfs_valid(doc):
+	kfs_valid_till = doc.get("kfs_valid_till")
+	return bool(kfs_valid_till) and getdate(kfs_valid_till) >= getdate()
 
 
 # Outbound — eKYC
@@ -199,11 +210,18 @@ def log_webhook_status(payload, event, status):
 
 
 def acknowledge_kfs_on_signed(log):
-	if (
+	if not (
 		log.linked_doctype == "Loan Application"
 		and log.linked_docname
 		and "lending" in frappe.get_installed_apps()
 	):
+		return
+
+	if not log.get("kfs_valid_till"):
+		return
+
+	current_kfs_valid_till = frappe.db.get_value("Loan Application", log.linked_docname, "kfs_valid_till")
+	if current_kfs_valid_till and getdate(current_kfs_valid_till) == getdate(log.kfs_valid_till):
 		frappe.db.set_value("Loan Application", log.linked_docname, "borrower_acknowledged", 1)
 
 
@@ -223,13 +241,16 @@ def get_document_data(payload):
 # Request log helpers
 
 
-def save_request_log(response, linked_doctype=None, linked_docname=None, request_type=None):
+def save_request_log(
+	response, linked_doctype=None, linked_docname=None, request_type=None, kfs_valid_till=None
+):
 	doc = frappe.new_doc("Digio Request Log")
 	doc.digio_id = response.get("id")
 	doc.response_json = json.dumps(response, indent=1)
 	doc.linked_doctype = linked_doctype
 	doc.linked_docname = linked_docname
 	doc.request_type = request_type
+	doc.kfs_valid_till = kfs_valid_till
 	doc.status = "Pending"
 	doc.save(ignore_permissions=True)
 

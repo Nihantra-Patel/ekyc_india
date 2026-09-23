@@ -96,6 +96,9 @@ def add_working_days(start_date, working_days):
 @frappe.whitelist()
 @if_lending_app_installed
 def acknowledge_kfs(loan_application: str):
+	if not isinstance(loan_application, str):
+		frappe.throw(_("Loan Application must be a string."), frappe.ValidationError)
+
 	doc = frappe.get_doc("Loan Application", loan_application)
 	doc.check_permission("write")
 

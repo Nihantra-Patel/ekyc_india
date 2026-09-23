@@ -116,6 +116,21 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		check_kfs_before_esign(doc)
 		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
 
+	def test_esign_blocked_when_kfs_expired(self):
+		from frappe.utils import add_days
+
+		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import (
+			check_kfs_before_esign,
+			get_esign_print_format,
+		)
+
+		doc = self.make_application()
+		frappe.db.set_single_value("Loan Origination Settings", "enforce_kfs_before_esign", 1)
+
+		doc.db_set("kfs_valid_till", add_days(frappe.utils.getdate(), -1))
+		self.assertRaises(frappe.ValidationError, check_kfs_before_esign, doc)
+		self.assertIsNone(get_esign_print_format(doc))
+
 	def test_esign_print_format_is_kfs_when_enforced(self):
 		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import get_esign_print_format
 
@@ -136,10 +151,28 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		doc = self.make_application()
 		self.assertFalse(doc.borrower_acknowledged)
 
-		log = frappe._dict(linked_doctype="Loan Application", linked_docname=doc.name)
+		log = frappe._dict(
+			linked_doctype="Loan Application", linked_docname=doc.name, kfs_valid_till=doc.kfs_valid_till
+		)
 		acknowledge_kfs_on_signed(log)
 
 		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 1)
+
+	def test_signed_webhook_ignores_stale_kfs(self):
+		from ekyc_india.ekyc_india.doctype.digio_settings.digio_settings import (
+			acknowledge_kfs_on_signed,
+		)
+
+		doc = self.make_application()
+		stale_valid_till = add_working_days(doc.kfs_valid_till, 1)
+		self.assertNotEqual(doc.kfs_valid_till, stale_valid_till)
+
+		log = frappe._dict(
+			linked_doctype="Loan Application", linked_docname=doc.name, kfs_valid_till=stale_valid_till
+		)
+		acknowledge_kfs_on_signed(log)
+
+		self.assertEqual(frappe.db.get_value("Loan Application", doc.name, "borrower_acknowledged"), 0)
 
 	def test_borrower_acknowledged_is_read_only(self):
 		field = frappe.get_meta("Loan Application").get_field("borrower_acknowledged")
