@@ -119,6 +119,11 @@ def add_working_days(start_date, working_days):
 	return current
 
 
+def is_kfs_valid(doc):
+	kfs_valid_till = doc.get("kfs_valid_till")
+	return bool(kfs_valid_till) and getdate(kfs_valid_till) >= getdate()
+
+
 @frappe.whitelist()
 @if_lending_app_installed
 def acknowledge_kfs(loan_application: str):
@@ -128,8 +133,13 @@ def acknowledge_kfs(loan_application: str):
 	doc = frappe.get_doc("Loan Application", loan_application)
 	doc.check_permission("write")
 
-	if not doc.get("kfs_valid_till"):
-		frappe.throw(_("Generate the Key Facts Statement (KFS) before recording acknowledgement."))
+	if not is_kfs_valid(doc):
+		frappe.throw(
+			_(
+				"Generate a valid Key Facts Statement (KFS) before recording acknowledgement. "
+				"The current KFS has expired."
+			)
+		)
 
 	doc.db_set("borrower_acknowledged", 1)
 	return doc.name

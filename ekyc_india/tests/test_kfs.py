@@ -198,6 +198,11 @@ class IntegrationTestKFSOnLoanApplication(IntegrationTestCase):
 		doc.db_set("kfs_valid_till", None)
 		self.assertRaises(frappe.ValidationError, acknowledge_kfs, doc.name)
 
+	def test_acknowledge_kfs_rejects_expired_kfs(self):
+		doc = self.make_application()
+		doc.db_set("kfs_valid_till", add_days(getdate(), -1))
+		self.assertRaises(frappe.ValidationError, acknowledge_kfs, doc.name)
+
 	def test_acknowledge_kfs_sets_flag(self):
 		doc = self.make_application()
 		self.assertFalse(doc.borrower_acknowledged)

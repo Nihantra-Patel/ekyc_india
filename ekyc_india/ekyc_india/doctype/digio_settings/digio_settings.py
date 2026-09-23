@@ -10,8 +10,10 @@ import frappe
 from frappe import _
 from frappe.integrations.utils import make_request
 from frappe.model.document import Document
-from frappe.utils import getdate, now_datetime
+from frappe.utils import now_datetime
 from frappe.utils.password import get_decrypted_password
+
+from ekyc_india.kfs import is_kfs_valid
 
 
 class DigioSettings(Document):
@@ -82,11 +84,6 @@ def check_kfs_before_esign(doc):
 
 	if not is_kfs_valid(doc):
 		frappe.throw(_("Please generate the Key Facts Statement (KFS) before requesting eSignature."))
-
-
-def is_kfs_valid(doc):
-	kfs_valid_till = doc.get("kfs_valid_till")
-	return bool(kfs_valid_till) and getdate(kfs_valid_till) >= getdate()
 
 
 # Outbound — eKYC
